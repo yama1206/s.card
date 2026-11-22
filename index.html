@@ -36,6 +36,11 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 .u i{font-style:normal;font-size:14px;color:var(--c);font-weight:bold}
 .u s{text-decoration:none;font-size:10px;opacity:.85;min-height:12px}
 .u.tap{opacity:.5;transform:rotate(8deg)}
+.u.armed{border-color:#ffe14a;box-shadow:0 0 0 1px #ffe14a,0 0 8px #ffe14a}
+.u i.up{color:#ffe14a}
+.u .wp{position:absolute;top:0;left:0;right:0;background:#b8860bcc;color:#fff;font-size:9px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u.eqf{animation:eqf .9s ease-out}
+@keyframes eqf{0%{transform:scale(1.25);box-shadow:0 0 0 4px #fff,0 0 24px 8px #ffe14a}100%{transform:none}}
 .u.sel{box-shadow:0 0 0 2px #fff,0 0 12px var(--c)}
 .u.tg{box-shadow:0 0 0 3px #ffe14a;animation:bl 1s infinite}
 .u.tg2{box-shadow:0 0 0 3px #ff7a4a}
@@ -157,7 +162,7 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 <body>
 <div id="app"></div>
 <script>
-const VERSION='0.23';
+const VERSION='0.24';
 let TEST=false;
 const sleep=ms=>TEST?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const IDEO={
@@ -196,10 +201,10 @@ const artTag=(c,r)=>`<img class="art" src="${printImg(c,r||displayRarity(c))}" o
 
 defineSeries('e1560','1560年 桶狭間と関東',mk=>{
 // 創(織田家・桶狭間)
-mk('so','u','木下藤吉郎',2,1000,3,{k:['rush'],e:[{t:'draw',n:1}]});
+mk('so','u','木下藤吉郎',2,1000,3,{e:[{t:'draw',n:1}]});
 mk('so','u','丹羽長秀',4,4000,2,{e:[{t:'draw',n:1}]});
 mk('so','u','佐久間盛重',2,1000,3,{e:[{t:'draw',n:1}]});
-mk('so','u','毛利新助',2,2000,3,{k:['rush']});
+mk('so','u','毛利新助',2,2000,3);
 mk('so','u','服部小平太',3,3000,2,{e:[{t:'tapE'}]});
 mk('so','u','池田恒興',3,3000,2,{k:['rush']});
 mk('so','u','柴田勝家',5,6000,2,{killBreak:true});
@@ -210,10 +215,10 @@ mk('so','w','三間槍',2,0,1,{w:{pow:1000,tie:true}});
 mk('so','x','田楽狭間の強襲',3,0,2,{e:[{t:'kill',tapped:true}]});
 // 義(上杉家・関東管領)
 mk('gi','u','斎藤朝信',1,1000,3,{k:['guard']});
-mk('gi','p','綾姫',4,0,1,{ps:'refill'});
+mk('gi','p','綾姫',4,0,1,{ps:'refill1'});
 mk('gi','u','色部勝長',2,2000,3,{k:['guard'],blockBonus:2000});
 mk('gi','u','本庄繁長',3,3000,2,{k:['guard'],blockBonus:1000});
-mk('gi','u','中条藤資',3,3000,2,{k:['guard']});
+mk('gi','u','中条藤資',3,3000,2);
 mk('gi','u','上杉憲政',3,1000,2,{e:[{t:'shield',n:1}]});
 mk('gi','u','直江景綱',4,3000,2,{e:[{t:'draw',n:1}]});
 mk('gi','u','上杉政虎【関東管領】',6,6000,1,{pr:['SR','SSR'],k:['double'],e:[{t:'draw',n:1},{t:'shield',n:1}]});
@@ -239,7 +244,7 @@ mk('bo','u','風魔小太郎',2,1000,3,{e:[{t:'tapE'}],h:'hojo'});
 mk('bo','u','大道寺政繁',2,2000,3,{k:['guard'],h:'hojo'});
 mk('bo','u','北条氏政',3,2000,2,{e:[{t:'draw',n:1}],h:'hojo'});
 mk('bo','u','北条幻庵',3,1000,2,{e:[{t:'peekDiscard'}],h:'hojo'});
-mk('bo','u','遠山綱景',3,3000,2,{k:['guard'],h:'hojo'});
+mk('bo','u','遠山綱景',3,3000,2,{h:'hojo'});
 mk('bo','u','松田憲秀',4,3000,2,{e:[{t:'kill',max:4000,tapped:true}],h:'hojo'});
 mk('bo','u','北条綱成',4,4000,2,{k:['guard'],blockBonus:2000,h:'hojo'});
 mk('bo','u','北条氏康',6,6000,1,{pr:['SR','SSR'],k:['guard'],e:[{t:'draw',n:1},{t:'discard',n:1}],h:'hojo'});
@@ -349,6 +354,8 @@ mk('ni','c','村中城',5,0,1,{ps:'guardAura',h:'ryuzoji'});
 mk('ni','w','肥前の大身槍',2,0,1,{w:{pow:1000,tie:true},h:'ryuzoji'});
 mk('ni','x','今山の夜襲',3,0,2,{e:[{t:'tapSkip'}],h:'ryuzoji'});
 },{era:'1560年代 中国・九州'});
+// 能力を持つ武将は、能力なしの武将より武力が1000低い(最低1000)。能力なしの武将と汎用カードはそのまま
+for(const c of CARDS)if(c.t==='u'&&c.i!=='ne'&&(c.series==='e1560'||c.series==='e1560w')&&(c.k.length||c.e.length||c.killBreak||c.surviveShield||c.blockBonus||c.deathRamp))c.p=Math.max(1000,c.p-1000);
 
 // ===== スターターデッキ(無料で1回だけ受け取れる。受け取ると、そのカードが手に入りデッキに設定される) =====
 const STARTERS=[
@@ -387,7 +394,7 @@ const FXD={
 };
 const PSD={drawStart:'自分のターン開始時、1枚引く',aura:'味方の武将すべてパワー+1000',rushAll:'味方の武将すべてに突撃を与える',
  guardAll:'味方の武将すべてに守を与える',rampStart:'自分のターン開始時、山札の上を兵糧にする',
- sap:'自分のターン開始時、相手の手札が4枚以上なら1枚捨てさせる',refill:'自分のターン開始時、城門が4枚以下なら山札から1枚加える',
+ sap:'自分のターン開始時、相手の手札が4枚以上なら1枚捨てさせる',refill:'自分のターン開始時、城門が4枚以下なら山札から1枚加える',refill1:'自分のターン開始時、城門が1枚以下なら山札から1枚加える',
  chacha:'自分のターン開始時、自分の場に武器があれば1枚引く',guardAura:'味方の守を持つ武将すべてパワー+1000',
  rushDraw:'味方の突撃を持つ武将が城門を破ったとき、1枚引く(1ターンに1回)',atkAura:'味方の武将が攻撃している間、パワー+1000',
  nene:'自分のターン開始時、相手の手札が自分より多ければ1枚引く',gateLimit:'相手が城門(本丸)を攻撃できるのは、1ターンに2回まで',
@@ -409,7 +416,7 @@ function desc(c){
 
 // ===== state =====
 let G=null,screen='title',chosen=[],uidc=0;
-const ui={sel:null,selU:null,info:null,pick:null,modal:null,busy:true,rules:false};
+const ui={flash:null,sel:null,selU:null,info:null,pick:null,modal:null,busy:true,rules:false};
 // ===== ガチャ設定(価格・確率・ポイントはここを変えるだけで調整できる) =====
 const GACHA={
  coin:'石高',pt:'軍功',cards:5,guarantee:'R',
@@ -610,12 +617,12 @@ async function playCard(p,c){
  else if(c.t==='w'){
   let cands=p.units;if(p.ai&&p.units.some(u=>!u.weapon))cands=p.units.filter(u=>!u.weapon);
   const u=await choose(p,cands,'武器を装備する味方の武将を選んでください');
-  releaseWeapon(u);u.weapon=c;log(`${u.card.n}が${c.n}を装備した`);render();
+  releaseWeapon(u);u.weapon=c;log(`${u.card.n}が${c.n}を装備した`);ui.flash=u.uid;render();await sleep(900);ui.flash=null;render();
   for(const e of c.e)await applyFx(p,e);
  }else if(c.t==='x'){
   for(const e of c.e){if(G.over)return;await applyFx(p,e);}
   p.grave.push(c);
- }else{p.fields.push(c);render();for(const e of c.e){if(G.over)return;await applyFx(p,e);}}
+ }else{const old=p.fields.find(f=>f.t===c.t);if(old){p.fields=p.fields.filter(f=>f!==old);p.grave.push(old);log(`${old.n}を${c.n}に入れ替えた`);}p.fields.push(c);render();for(const e of c.e){if(G.over)return;await applyFx(p,e);}}
  render();
 }
 
@@ -703,6 +710,7 @@ async function startTurn(i){
   else if(c.ps==='rampStart')ramp(p,1);
   else if(c.ps==='sap'&&d.hand.length>=4)discardRand(d,1);
   else if(c.ps==='refill'&&p.shields.length<=4&&p.deck.length)p.shields.push(p.deck.shift());
+  else if(c.ps==='refill1'&&p.shields.length<=1&&p.deck.length)p.shields.push(p.deck.shift());
   else if(c.ps==='chacha'&&p.units.some(u=>u.weapon))draw(p,1);
   else if(c.ps==='nene'&&d.hand.length>p.hand.length)draw(p,1);
   else if(c.ps==='hatsu'&&p.mana.length<d.mana.length)ramp(p,1);
@@ -724,7 +732,7 @@ async function aiTurn(p){
   p.hand=p.hand.filter(x=>x!==best);p.mana.push({card:best,tapped:false});p.charged=true;log(`${p.name}は兵糧を蓄えた`);render();await sleep(500);
  }
  for(let n=0;n<10&&!G.over;n++){
-  const opts=p.hand.filter(c=>canCast(p,c)&&(c.t!=='x'||fxUseful(p,c))&&!((c.t==='p'||c.t==='c')&&p.fields.some(f=>f.id===c.id)));
+  const opts=p.hand.filter(c=>canCast(p,c)&&(c.t!=='x'||fxUseful(p,c))&&!((c.t==='p'||c.t==='c')&&p.fields.some(f=>f.t===c.t&&f.c>=c.c)));
   if(!opts.length)break;
   opts.sort((a,b)=>b.c-a.c);
   await playCard(p,opts[0]);await sleep(600);
@@ -757,16 +765,15 @@ function startGame(deckMap,auto){
 function mTile(m){return `<i class="md ${m.tapped?'t':''}" style="background:${IDEO[m.card.i].c}"></i>`;}
 function unitTile(u,mine){
  const col=IDEO[u.card.i].c;let cls='u';
- if(u.tapped)cls+=' tap';if(ui.selU===u.uid)cls+=' sel';
+ if(u.tapped)cls+=' tap';if(ui.selU===u.uid)cls+=' sel';if(u.weapon)cls+=' armed';if(ui.flash===u.uid)cls+=' eqf';
  if(ui.pick&&ui.pick.ids.includes(u.uid))cls+=' tg';
  const su=ui.selU?find(ui.selU):null;
  if(!mine&&su&&!ui.busy&&canAtkU(su)&&u.tapped&&!ui.pick)cls+=' tg2';
  let bd=Object.keys(KW).filter(k=>hasKw(u,k)).map(k=>KW[k]).join('');
- if(u.weapon)bd+=' 装';
- if(u.mods.length)bd+=' ↑';
+  if(u.mods.length)bd+=' ↑';
  if(u.sick&&!hasKw(u,'rush'))bd+=' 待';
  if(u.tapped)bd+=' 横';
- return `<div class="${cls}" style="--c:${col}" data-a="${mine?'myunit':'enemyunit'}" data-id="${u.uid}">${artTag(u.card)}<b>${u.card.n}</b><i>${power(u)}</i><s>${bd}</s></div>`;
+ return `<div class="${cls}" style="--c:${col}" data-a="${mine?'myunit':'enemyunit'}" data-id="${u.uid}">${artTag(u.card)}<b>${u.card.n}</b><i${u.weapon&&u.weapon.w.pow?' class="up"':''}>${power(u)}${u.weapon&&u.weapon.w.pow?'▲':''}</i><s>${bd}</s>${u.weapon?`<span class="wp">⚔${u.weapon.n}</span>`:''}</div>`;
 }
 function handTile(c,me){
  const ok=!ui.busy&&canCast(me,c);
@@ -846,6 +853,7 @@ function rulesHTML(){
  ・毎ターン: 1枚引く → 手札1枚を兵糧にする(任意・1回) → カードを使う → 武将で攻撃。<br>
  ・コストは兵糧を横にして支払う。使うカードと同じ思想の兵糧が最低1枚必要。<br>
  ・武将は登場したターンは攻撃できない(突撃を除く)。攻撃すると横になる。<br>
+ ・城と姫は、それぞれ場に1枚だけ。新しく出すと前のものと入れ替わる。<br>
  ・武器は味方の武将1体に装備して場に残ります。武将が場を離れると武器は墓地へ。1体に装備できるのは1枚で、入れ替えると古い武器は墓地へ。<br>
  ・カードショップで石高を使ってパックを開け、新しいカードを集められます。
  ・攻撃先は相手の城門か、横向きの武将。パワーが高い方が勝ち、同じなら相打ち。<br>
