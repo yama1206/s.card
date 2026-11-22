@@ -139,7 +139,7 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 <body>
 <div id="app"></div>
 <script>
-const VERSION='0.11';
+const VERSION='0.12';
 let TEST=false;
 const sleep=ms=>TEST?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const IDEO={
@@ -156,8 +156,8 @@ const KWN={rush:'突撃(登場したターンから攻撃できる)',guard:'守(
 // シリーズ単位で定義する。カードIDは「シリーズID_思想_連番」で自動採番(例: base_so_01)。
 // 画像は img/カードID.png を置くと自動で表示される(無ければ色枠だけ)。個別指定は {img:'パス'}。
 // 新シリーズは series/xxx.js に defineSeries('set2','第2弾',mk=>{ mk(...); }); と書き、下の SERIES_FILES に追加する。
-// 初期カード(base)はガチャ対象外。ガチャで出る版は、時代別シリーズ({era:'..'}付き)のカードだけ。種類ごとの版は下の表(姫と大名はSR/SSRだけ。大名は個別に pr:['SR','SSR'] を付ける)。
-const PRINTS_ADD={u:['N','R'],p:['SR','SSR'],c:['N','R'],w:['N'],x:['N','R']};
+// 初期カード(base)はガチャ対象外。ガチャで出る版は、時代別シリーズ({era:'..'}付き)のカードだけ。種類ごとの版は下の表(武将=SR、姫と大名=SR/SSR、城と奇襲=R、武器=N。大名は個別に pr:['SR','SSR'] を付ける)。
+const PRINTS_ADD={u:['SR'],p:['SR','SSR'],c:['R'],w:['N'],x:['R']};
 const SERIES=[],CARDS=[];
 const availIdeos=()=>Object.keys(IDEO).filter(k=>CARDS.filter(c=>c.i===k).length>=12);
 const SERIES_FILES=[]; // 例: ['series/set2.js']
