@@ -139,7 +139,7 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 <body>
 <div id="app"></div>
 <script>
-const VERSION='0.10';
+const VERSION='0.11';
 let TEST=false;
 const sleep=ms=>TEST?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const IDEO={
@@ -156,8 +156,8 @@ const KWN={rush:'突撃(登場したターンから攻撃できる)',guard:'守(
 // シリーズ単位で定義する。カードIDは「シリーズID_思想_連番」で自動採番(例: base_so_01)。
 // 画像は img/カードID.png を置くと自動で表示される(無ければ色枠だけ)。個別指定は {img:'パス'}。
 // 新シリーズは series/xxx.js に defineSeries('set2','第2弾',mk=>{ mk(...); }); と書き、下の SERIES_FILES に追加する。
-// 初期カード(base)はガチャ対象外。ガチャで出る版は、時代別シリーズ({era:'..'}付き)のカードだけ。種類ごとの版は下の表。
-const PRINTS_ADD={u:['N','R'],p:['R','SR'],c:['N','R'],w:['N'],x:['N','R']};
+// 初期カード(base)はガチャ対象外。ガチャで出る版は、時代別シリーズ({era:'..'}付き)のカードだけ。種類ごとの版は下の表(姫と大名はSR/SSRだけ。大名は個別に pr:['SR','SSR'] を付ける)。
+const PRINTS_ADD={u:['N','R'],p:['SR','SSR'],c:['N','R'],w:['N'],x:['N','R']};
 const SERIES=[],CARDS=[];
 const availIdeos=()=>Object.keys(IDEO).filter(k=>CARDS.filter(c=>c.i===k).length>=12);
 const SERIES_FILES=[]; // 例: ['series/set2.js']
@@ -184,7 +184,7 @@ mk('so','u','毛利新助',2,2000,3,{k:['rush']});
 mk('so','u','服部小平太',3,3000,2,{e:[{t:'tapE'}]});
 mk('so','u','池田恒興',3,3000,2,{k:['rush']});
 mk('so','u','柴田勝家',5,6000,2,{killBreak:true});
-mk('so','u','織田信長【桶狭間】',6,6000,1,{k:['rush'],e:[{t:'kill',max:4000}]});
+mk('so','u','織田信長【桶狭間】',6,6000,1,{pr:['SR','SSR'],k:['rush'],e:[{t:'kill',max:4000}]});
 mk('so','p','帰蝶',4,0,1,{ps:'rampStart'});
 mk('so','c','清洲城',4,0,1,{ps:'aura'});
 mk('so','w','三間槍',2,0,1,{w:{pow:1000,tie:true}});
@@ -197,7 +197,7 @@ mk('gi','u','本庄繁長',3,3000,2,{k:['guard'],blockBonus:1000});
 mk('gi','u','中条藤資',3,3000,2,{k:['guard']});
 mk('gi','u','上杉憲政',3,1000,2,{e:[{t:'shield',n:1}]});
 mk('gi','u','直江景綱',4,3000,2,{e:[{t:'draw',n:1}]});
-mk('gi','u','上杉政虎【関東管領】',6,6000,1,{k:['double'],e:[{t:'draw',n:1},{t:'shield',n:1}]});
+mk('gi','u','上杉政虎【関東管領】',6,6000,1,{pr:['SR','SSR'],k:['double'],e:[{t:'draw',n:1},{t:'shield',n:1}]});
 mk('gi','c','厩橋城',5,0,1,{ps:'guardAura'});
 mk('gi','w','越後の長柄',2,0,1,{w:{k:'guard',tie:true}});
 mk('gi','x','関東管領就任',4,0,2,{e:[{t:'shield',n:2}]});
@@ -210,7 +210,7 @@ mk('bu','u','高坂昌信',3,3000,2,{e:[{t:'pumpTemp',pow:1000,kw:'rush'}],h:'ta
 mk('bu','u','真田幸隆',3,2000,2,{e:[{t:'tapE'}],h:'takeda'});
 mk('bu','u','山本勘助',4,3000,2,{e:[{t:'peekDiscard'}],h:'takeda'});
 mk('bu','u','内藤昌豊',4,4000,2,{killBreak:true,h:'takeda'});
-mk('bu','u','武田信玄',6,7000,1,{e:[{t:'kill',max:4000}],h:'takeda'});
+mk('bu','u','武田信玄',6,7000,1,{pr:['SR','SSR'],e:[{t:'kill',max:4000}],h:'takeda'});
 mk('bu','p','三条夫人',3,0,1,{ps:'aura',h:'takeda'});
 mk('bu','c','躑躅ヶ崎館',6,0,1,{ps:'rushAll',h:'takeda'});
 mk('bu','w','風林火山の旗',2,0,1,{w:{pow:1000,k:'rush'},h:'takeda'});
@@ -223,7 +223,7 @@ mk('bo','u','北条幻庵',3,1000,2,{e:[{t:'peekDiscard'}],h:'hojo'});
 mk('bo','u','遠山綱景',3,3000,2,{k:['guard'],h:'hojo'});
 mk('bo','u','松田憲秀',4,3000,2,{e:[{t:'kill',max:4000,tapped:true}],h:'hojo'});
 mk('bo','u','北条綱成',4,4000,2,{k:['guard'],blockBonus:2000,h:'hojo'});
-mk('bo','u','北条氏康',6,6000,1,{k:['guard'],e:[{t:'draw',n:1},{t:'discard',n:1}],h:'hojo'});
+mk('bo','u','北条氏康',6,6000,1,{pr:['SR','SSR'],k:['guard'],e:[{t:'draw',n:1},{t:'discard',n:1}],h:'hojo'});
 mk('bo','p','瑞渓院',4,0,1,{ps:'nene',h:'hojo'});
 mk('bo','c','小田原城',5,0,1,{ps:'gateLimit',h:'hojo'});
 mk('bo','w','黄八幡の旗',2,0,1,{w:{pow:1000,tie:true},h:'hojo'});
@@ -236,7 +236,7 @@ mk('so','u','朝比奈泰朝',3,3000,2,{h:'imagawa'});
 mk('so','u','松井宗信',3,3000,2,{k:['rush'],h:'imagawa'});
 mk('so','u','関口親永',4,3000,2,{e:[{t:'shield',n:1}],h:'imagawa'});
 mk('so','u','太原雪斎',4,3000,2,{e:[{t:'draw',n:1},{t:'shield',n:1}],h:'imagawa'});
-mk('so','u','今川義元',6,5000,1,{e:[{t:'draw',n:1},{t:'ramp',n:1}],h:'imagawa'});
+mk('so','u','今川義元',6,5000,1,{pr:['SR','SSR'],e:[{t:'draw',n:1},{t:'ramp',n:1}],h:'imagawa'});
 mk('so','p','寿桂尼',4,0,1,{ps:'drawStart',h:'imagawa'});
 mk('so','c','今川館',5,0,1,{ps:'deathDraw',h:'imagawa'});
 mk('so','w','海道の弓',3,0,1,{w:{pow:1000,drawAtk:true},h:'imagawa'});
@@ -249,7 +249,7 @@ mk('ni','u','大久保忠世',3,3000,2,{h:'matsudaira'});
 mk('ni','u','服部半蔵',3,2000,2,{e:[{t:'tapE'}],h:'matsudaira'});
 mk('ni','u','鳥居元忠',4,3000,2,{k:['guard'],deathRamp:true,h:'matsudaira'});
 mk('ni','u','酒井忠次',4,4000,2,{e:[{t:'ramp',n:1}],h:'matsudaira'});
-mk('ni','u','松平元康',6,6000,1,{k:['guard'],e:[{t:'ramp',n:1},{t:'shield',n:1}],h:'matsudaira'});
+mk('ni','u','松平元康',6,6000,1,{pr:['SR','SSR'],k:['guard'],e:[{t:'ramp',n:1},{t:'shield',n:1}],h:'matsudaira'});
 mk('ni','p','築山殿',3,0,1,{ps:'hatsu',h:'matsudaira'});
 mk('ni','c','岡崎城',5,0,1,{ps:'guardAll',h:'matsudaira'});
 mk('ni','w','厭離穢土の旗',2,0,1,{w:{pow:1000,k:'guard'},h:'matsudaira'});
