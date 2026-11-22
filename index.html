@@ -144,7 +144,7 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 <body>
 <div id="app"></div>
 <script>
-const VERSION='0.17';
+const VERSION='0.18';
 let TEST=false;
 const sleep=ms=>TEST?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const IDEO={
@@ -335,7 +335,7 @@ const RORD=['N','R','SR','SSR'];
 const DECK_SIZE=36,MAX_COPY=3,SAVE_KEY='sengoku_card_v1';
 let SV={deck:{},coin:0,pt:0,prints:{},lastLogin:'',starters:{}};
 let myDeck={},editFilter='all',editAll=false,editMsg='';
-let shopTab='pack',packIdeo='so',collFilter='all',collRar='all',disSel={},shopMsg='',pk=null,loginMsg='';
+let shopBig=null,shopTab='pack',packIdeo='so',collFilter='all',collRar='all',disSel={},shopMsg='',pk=null,loginMsg='';
 const cardById=id=>CARDS.find(c=>c.id===id);
 const printKey=(c,r)=>c.id+'|'+r;
 const printCount=(c,r)=>SV.prints[printKey(c,r)]||0;
@@ -832,7 +832,7 @@ function printRows(mode){
   const n=printCount(c,r),k=printKey(c,r),col=IDEO[c.i].c,m=maxDismantle(c,r);let ctl='';
   if(mode==='coll'){const sel=Math.min(disSel[k]||0,m);ctl=m>0?`<div class="ctr"><button data-a="dsel" data-id="${k}~-1">−</button><span>${sel}</span><button data-a="dsel" data-id="${k}~1">＋</button><button data-a="dis" data-id="${k}" ${sel?'':'disabled'}>分解<br>+${sel*GACHA.dismantle[r]}</button></div>`:'';}
   else{const cost=GACHA.exchange[r];ctl=`<button data-a="trade" data-id="${k}" ${SV.pt>=cost&&n<MAX_COPY?'':'disabled'}>${cost}${GACHA.pt}<br>交換</button>`;}
-  return `<div class="er ${n?'':'unown'}" style="--c:${col}"><div class="th" style="--c:${col}"><span>${IDEO[c.i].n}</span><img src="${printImg(c,r)}" onerror="imgFb(this,'${baseImg(c)}')" alt=""></div><div class="tx"><b>${c.n}</b> <span class="rt rt-${r}">${r}</span> <span style="color:${col}">${IDEO[c.i].n}</span> ${TL[c.t]}<br><span class="dim">所持 ${n}${mode==='coll'&&n?` ・分解可 ${m}`:''}</span></div>${ctl}</div>`;
+  return `<div class="er ${n?'':'unown'}" style="--c:${col};cursor:pointer" data-a="shopbig" data-id="${k}"><div class="th" style="--c:${col}"><span>${IDEO[c.i].n}</span><img src="${printImg(c,r)}" onerror="imgFb(this,'${baseImg(c)}')" alt=""></div><div class="tx"><b>${c.n}</b> <span class="rt rt-${r}">${r}</span> <span style="color:${col}">${IDEO[c.i].n}</span> ${TL[c.t]}<br><span class="dim">所持 ${n}${mode==='coll'&&n?` ・分解可 ${m}`:''}</span></div>${ctl}</div>`;
  }).join('');
 }
 function shopHTML(){
@@ -850,7 +850,13 @@ function shopHTML(){
  return `<div class="ver">v${VERSION}<button data-a="update">更新</button></div><div style="padding-top:40px">
  <div class="ehead"><b style="color:var(--gold)">カードショップ</b> <span class="coinb">${GACHA.coin} ${SV.coin}</span> <span class="coinb">${GACHA.pt} ${SV.pt}</span></div>
  <div>${[['pack','パック'],['coll','所持・分解'],['trade','交換']].map(([k,n])=>`<span class="sc ${shopTab===k?'on':''}" data-a="stab" data-id="${k}">${n}</span>`).join('')}</div>
- <div class="msg2">${shopMsg}</div>${body}<button data-a="toTitle" style="width:100%;margin-top:12px">戻る</button></div>`;
+ <div class="msg2">${shopMsg}</div>${body}<button data-a="toTitle" style="width:100%;margin-top:12px">戻る</button>${shopBigHTML()}</div>`;
+}
+// カード一覧をタップした時の大きなイラスト。持っているカードは明るく、持っていないカードは暗く表示する
+function shopBigHTML(){
+ if(!shopBig)return '';const [cid,r]=shopBig.split('|'),c=cardById(cid);if(!c)return '';
+ const n=printCount(c,r);
+ return `<div class="bigov" style="--c:${IDEO[c.i].c}" data-a="shopbigClose"><img src="${printImg(c,r)}" onerror="imgFb(this,'${baseImg(c)}')" style="${n?'':'filter:brightness(.25) grayscale(.5)'}" alt=""><div class="bn">【${IDEO[c.i].n}】${c.n} <span class="rt-${r}">${r}</span></div><div class="bh">${n?`所持 ${n}枚`:'未所持'}　・　タップで閉じる</div></div>`;
 }
 const toastHTML=()=>`<div class="ov"><div class="mb" style="text-align:center">${loginMsg}<button data-a="toastClose">OK</button></div></div>`;
 
@@ -879,7 +885,9 @@ async function onClick(a,id){
  if(screen==='list'){if(a==='toTitle'){screen='title';render();}return;}
  if(screen==='shop'){
   const split=k=>{const [cid,r]=k.split('|');return [cardById(cid),r];};
-  if(a==='toTitle'){screen='title';}
+  if(a==='shopbig'){shopBig=id;}
+  else if(a==='shopbigClose'){shopBig=null;}
+  else if(a==='toTitle'){screen='title';}
   else if(a==='stab'){shopTab=id;shopMsg='';}
   else if(a==='pideo')packIdeo=id;
   else if(a==='cf')collFilter=id;
