@@ -105,8 +105,13 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 .cfront{transform:rotateY(180deg)}
 .cback{border-radius:14px;border:4px solid var(--gold);background:radial-gradient(circle at 50% 40%,#4a3a1c,#14100a);display:flex;align-items:center;justify-content:center;font-size:110px;color:var(--gold);text-shadow:0 0 24px #a5701e}
 .cf{width:240px;height:336px;border-radius:14px;border:4px solid var(--c);background:#1d1712;position:relative;overflow:hidden;color:#f3e9d2;display:flex;flex-direction:column}
-.cfa{height:50%;background:linear-gradient(160deg,var(--c),#111);position:relative;display:flex;align-items:center;justify-content:center;font-size:96px;color:#fff3}
-.cfa .art{filter:none;border-radius:0}
+.cfa{height:54%;background:linear-gradient(160deg,var(--c),#111);position:relative;display:flex;align-items:center;justify-content:center;font-size:96px;color:#fff3}
+.cfa .art{filter:none;border-radius:0;object-position:50% 14%} /* 縦長の絵なので頭が切れないよう上寄せ */
+.cf.t-c .cfa .art,.cf.t-w .cfa .art,.cf.t-x .cfa .art{object-position:50% 40%}
+.smw{cursor:pointer}
+.bigov{position:fixed;inset:0;background:#000e;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px;box-sizing:border-box}
+.bigov img{max-width:92vw;max-height:76vh;border:4px solid var(--c);border-radius:14px;object-fit:contain;background:#111;box-shadow:0 0 24px #000}
+.bigov .bn{font-size:18px;color:#f3e9d2;font-weight:bold}.bigov .bh{font-size:12px;opacity:.7}
 .cft{display:flex;gap:6px;align-items:center;padding:6px 8px;font-size:15px}
 .cfc{background:var(--c);color:#111;border-radius:50%;width:26px;height:26px;text-align:center;line-height:26px;font-weight:bold;flex:none}
 .cfi{padding:0 8px;font-size:12px;opacity:.8}.cfd{padding:4px 8px;font-size:11px;line-height:1.45;flex:1;overflow:hidden}
@@ -139,7 +144,7 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 <body>
 <div id="app"></div>
 <script>
-const VERSION='0.14';
+const VERSION='0.15';
 let TEST=false;
 const sleep=ms=>TEST?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const IDEO={
@@ -768,7 +773,7 @@ function render(){
 function sparks(n,col){let h='';for(let i=0;i<n;i++)h+=`<i class="sp" style="left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${(Math.random()*1.2).toFixed(2)}s;background:${col}"></i>`;return h;}
 function cardFace(c,r,isNew){
  const col=IDEO[c.i].c;
- return `<div class="cf r-${r}" style="--c:${col}"><div class="cfa"><span>${IDEO[c.i].n}</span>${artTag(c,r)}</div><div class="cft"><span class="cfc">${c.c}</span><b>${c.n}</b></div><div class="cfi">${TL[c.t]}${c.t==='u'?'  パワー'+c.p:''}</div><div class="cfd">${desc(c)}</div><span class="cfr rt-${r}">${r}</span>${isNew?'<span class="cfn">NEW</span>':''}<div class="foil"></div></div>`;
+ return `<div class="cf r-${r} t-${c.t}" style="--c:${col}"><div class="cfa"><span>${IDEO[c.i].n}</span>${artTag(c,r)}</div><div class="cft"><span class="cfc">${c.c}</span><b>${c.n}</b></div><div class="cfi">${TL[c.t]}${c.t==='u'?'  パワー'+c.p:''}</div><div class="cfd">${desc(c)}</div><span class="cfr rt-${r}">${r}</span>${isNew?'<span class="cfn">NEW</span>':''}<div class="foil"></div></div>`;
 }
 const stkT=t=>`translateY(${(t*16).toFixed(1)}px) scale(${(1-t*0.03).toFixed(3)})`;
 function packHTML(){
@@ -778,8 +783,9 @@ function packHTML(){
  }else if(p.stage==='reveal'){
   inner=`<div class="pk-title">${p.idx+1} / ${p.cards.length}</div><div class="stage" id="stage">${p.cards.slice(p.idx).map((x,j)=>`<div class="stk" data-j="${j}" style="z-index:${50-j};transform:${stkT(j)}">${cardFace(x.c,x.r,x.isNew)}</div>`).join('')}</div><div class="pk-hint">上にスワイプして1枚ずつめくる(ゆっくりずらすと下のカードが見えます)</div><button data-a="skip">スキップ</button>`;
  }else{
-  inner=`<div class="pk-title">開封結果</div><div class="sumgrid">${p.cards.map(x=>`<div class="smw"><div class="smi">${cardFace(x.c,x.r,x.isNew)}</div></div>`).join('')}</div><div class="acts" style="justify-content:center"><button data-a="again" ${SV.coin>=p.pack.cost?'':'disabled'}>もう1パック(${p.pack.cost}${GACHA.coin})</button><button data-a="packEnd">閉じる</button></div>`;
+  inner=`<div class="pk-title">開封結果</div><div class="sumgrid">${p.cards.map((x,k)=>`<div class="smw" data-a="bigcard" data-id="${k}"><div class="smi">${cardFace(x.c,x.r,x.isNew)}</div></div>`).join('')}</div><div class="pk-hint" style="margin:0 0 12px">カードをタップすると、大きなイラストが見られます</div><div class="acts" style="justify-content:center"><button data-a="again" ${SV.coin>=p.pack.cost?'':'disabled'}>もう1パック(${p.pack.cost}${GACHA.coin})</button><button data-a="packEnd">閉じる</button></div>`;
  }
+ if(p.stage==='summary'&&p.big!=null&&p.cards[p.big]){const x=p.cards[p.big];inner+=`<div class="bigov" style="--c:${IDEO[x.c.i].c}" data-a="bigClose"><img src="${printImg(x.c,x.r)}" onerror="imgFb(this,'${baseImg(x.c)}')" alt=""><div class="bn">【${IDEO[x.c.i].n}】${x.c.n} <span class="rt-${x.r}">${x.r}</span></div><div class="bh">タップで閉じる</div></div>`;}
  return `<div class="packov">${inner}</div>`;
 }
 let drag=null,sdrag=null;
@@ -856,6 +862,8 @@ async function onClick(a,id){
   else if(a==='skip'){pk.stage='summary';render();}
   else if(a==='again'){const res=pk.pack.id==='test'?testPull():buyPack(pk.pack);if(res){pk={pack:pk.pack,cards:res,stage:'tear',idx:0,flipped:false};render();}}
   else if(a==='packEnd'){pk=null;render();}
+  else if(a==='bigcard'){pk.big=+id;render();}
+  else if(a==='bigClose'){pk.big=null;render();}
   return;
  }
  if(screen==='title'){
