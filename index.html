@@ -145,7 +145,7 @@ button.big{width:100%;padding:14px;font-size:18px;margin:8px 0;background:#5a3a1
 <body>
 <div id="app"></div>
 <script>
-const VERSION='0.19';
+const VERSION='0.20';
 let TEST=false;
 const sleep=ms=>TEST?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const IDEO={
@@ -768,8 +768,124 @@ function rulesHTML(){
  ・守を持つ武将は、城門への攻撃を代わりに受けられる。<br>
  <button data-a="rulesClose">閉じる</button></div></div>`;
 }
+
+// ===== サウンド(外部ファイルなし。ブラウザのWebAudioで音を作る) =====
+const AUD={ctx:null,on:true,scene:null,timer:null,step:0,nextT:0,stepDur:0.25};
+try{AUD.on=localStorage.getItem('sengoku_snd')!=='off';}catch(e){}
+function audInit(){
+ if(AUD.ctx||typeof window==='undefined')return;
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  const c=new AC();AUD.ctx=c;
+  AUD.master=c.createGain();AUD.master.gain.value=AUD.on?1:0;AUD.master.connect(c.destination);
+  AUD.bgm=c.createGain();AUD.bgm.gain.value=0.16;AUD.bgm.connect(AUD.master);
+  AUD.sfx=c.createGain();AUD.sfx.gain.value=0.55;AUD.sfx.connect(AUD.master);
+  const len=Math.floor(c.sampleRate*1.6),ir=c.createBuffer(2,len,c.sampleRate);
+  for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.5);}
+  AUD.rev=c.createConvolver();AUD.rev.buffer=ir;const rg=c.createGain();rg.gain.value=0.35;AUD.rev.connect(rg);rg.connect(AUD.master);
+ }catch(e){AUD.ctx=null;}
+}
+function audResume(){audInit();if(AUD.ctx&&AUD.ctx.state==='suspended')AUD.ctx.resume();audStart();}
+const hz=m=>440*Math.pow(2,(m-69)/12);
+// 琴のようなはじく音
+function tone(t,m,dur,type,vol,dest,rev){
+ const c=AUD.ctx,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=hz(m);
+ g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+ o.connect(g);g.connect(dest);if(rev)g.connect(AUD.rev);o.start(t);o.stop(t+dur+0.05);
+}
+function noiseBurst(t,dur,f0,f1,vol,dest){
+ const c=AUD.ctx,len=Math.ceil(c.sampleRate*dur),b=c.createBuffer(1,len,c.sampleRate),d=b.getChannelData(0);
+ for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+ const s=c.createBufferSource();s.buffer=b;const f=c.createBiquadFilter();f.type='bandpass';f.Q.value=1.2;
+ f.frequency.setValueAtTime(f0,t);f.frequency.exponentialRampToValueAtTime(f1,t+dur);
+ const g=c.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+ s.connect(f);f.connect(g);g.connect(dest);s.start(t);
+}
+function thump(t,f,dur,vol,dest){
+ const c=AUD.ctx,o=c.createOscillator(),g=c.createGain();o.type='sine';
+ o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f*0.35),t+dur);
+ g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+ o.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+0.05);
+}
+function audOk(){return AUD.ctx&&AUD.on;}
+// パックを破る音(紙を裂く音+きらめき)
+function sfxTear(){
+ if(!audOk())return;const t=AUD.ctx.currentTime+0.01,d=AUD.sfx;
+ noiseBurst(t,0.38,900,5200,0.7,d);noiseBurst(t+0.05,0.3,2500,7000,0.3,d);
+ thump(t+0.3,140,0.25,0.5,d);
+ [88,93,96,100].forEach((m,i)=>tone(t+0.32+i*0.06,m,0.5,'sine',0.14,d,true));
+}
+// カードをめくる音
+function sfxFlip(){
+ if(!audOk())return;const t=AUD.ctx.currentTime+0.01,d=AUD.sfx;
+ noiseBurst(t,0.14,2600,900,0.35,d);tone(t+0.05,84,0.18,'triangle',0.1,d,false);
+}
+// カードが出た時の音。レア度が高いほど豪華にする
+function sfxRare(r){
+ if(!audOk())return;const t=AUD.ctx.currentTime+0.02,d=AUD.sfx;
+ if(r==='R'){[79,86].forEach((m,i)=>tone(t+i*0.12,m,0.7,'sine',0.22,d,true));return;}
+ if(r==='SR'){
+  thump(t,90,0.4,0.45,d);
+  [72,76,79,84,88,91].forEach((m,i)=>{tone(t+0.05+i*0.09,m,0.9,'triangle',0.2,d,true);tone(t+0.05+i*0.09,m+12,0.7,'sine',0.08,d,true);});
+  noiseBurst(t+0.1,0.8,3000,9000,0.18,d);
+  [72,76,79,84].forEach(m=>tone(t+0.7,m,1.6,'sine',0.14,d,true));
+  return;
+ }
+ if(r==='SSR'){
+  thump(t,70,0.9,0.9,d);thump(t+0.02,45,1.2,0.8,d);
+  noiseBurst(t,1.0,250,9000,0.5,d);
+  [60,64,67,72,76,79,84,88,91,96].forEach((m,i)=>{tone(t+0.1+i*0.08,m,1.1,'triangle',0.22,d,true);tone(t+0.1+i*0.08,m+12,0.9,'sine',0.1,d,true);});
+  [72,76,79,84,88].forEach(m=>{tone(t+1.0,m,2.6,'sine',0.17,d,true);tone(t+1.0,m,2.2,'triangle',0.08,d,true);});
+  [96,100,103,108].forEach((m,i)=>tone(t+1.05+i*0.12,m,1.8,'sine',0.1,d,true));
+  noiseBurst(t+1.0,1.6,6000,12000,0.12,d);
+ }
+}
+// ----- BGM(和風の音階を自動で演奏。メニューはゆったり、対戦は太鼓つきで速め) -----
+const BGM_S=[62,63,67,69,70,74,75,79,81,82]; // 陰旋法(レ ミ♭ ソ ラ シ♭)
+const BGM_MENU=[[5,-1,4,-1,2,-1,3,-1,2,-1,0,-1,-1,-1,-1,-1],[3,-1,2,-1,0,-1,2,-1,3,-1,4,-1,5,-1,-1,-1],[0,-1,2,3,-1,2,0,-1,-1,-1,3,-1,2,-1,0,-1],[7,-1,5,-1,4,-1,5,-1,4,-1,2,-1,3,-1,-1,-1]];
+const BGM_BATTLE=[[5,5,-1,4,5,-1,7,-1,5,4,-1,2,3,-1,2,-1],[7,-1,5,7,-1,8,7,-1,5,-1,4,5,-1,2,3,-1],[0,2,3,-1,2,3,5,-1,3,2,-1,0,2,-1,3,-1],[5,-1,5,4,5,-1,7,8,7,-1,5,4,2,-1,3,-1]];
+let bgmPat=null,bgmBar=0;
+function bgmStep(step,t){
+ const c=AUD.ctx,b=AUD.bgm,battle=AUD.scene==='battle',pos=step%16;
+ if(pos===0){bgmBar++;const set=battle?BGM_BATTLE:BGM_MENU;bgmPat=set[Math.floor(Math.random()*set.length)];}
+ if(pos===0||pos===8){tone(t,pos===0?38:45,battle?0.9:1.8,'triangle',battle?0.5:0.4,b,false);}
+ if(bgmPat){const n=bgmPat[pos];if(n>=0)tone(t,BGM_S[n],battle?0.35:0.9,'triangle',battle?0.5:0.45,b,true);}
+ if(!battle&&pos===4&&Math.random()<0.5)tone(t,BGM_S[Math.floor(Math.random()*5)]+12,1.2,'sine',0.2,b,true);
+ if(battle){
+  if(pos%4===0)thump(t,pos===0?95:80,0.25,pos===0?0.9:0.55,b);
+  if(pos===6||pos===14)noiseBurst(t,0.08,1800,900,0.18,b);
+ }
+}
+function bgmTick(){
+ const c=AUD.ctx;if(!c)return;
+ while(AUD.nextT<c.currentTime+0.3){bgmStep(AUD.step,AUD.nextT);AUD.nextT+=AUD.stepDur;AUD.step++;}
+}
+function audStart(){
+ if(!AUD.ctx||AUD.timer)return;
+ AUD.nextT=AUD.ctx.currentTime+0.1;AUD.step=0;AUD.stepDur=(AUD.scene==='battle')?0.14:0.3;
+ AUD.timer=setInterval(bgmTick,100);
+}
+function audScene(name){
+ if(AUD.scene===name)return;AUD.scene=name;AUD.stepDur=name==='battle'?0.14:0.3;AUD.step=0;
+}
+function audSetOn(on){
+ AUD.on=on;try{localStorage.setItem('sengoku_snd',on?'on':'off');}catch(e){}
+ if(AUD.master)AUD.master.gain.value=on?1:0;
+ const b=document.getElementById('sndbtn');if(b)b.textContent=on?'♪':'×';
+}
+if(typeof document!=='undefined'){
+ const mk=()=>{if(document.getElementById('sndbtn'))return;const b=document.createElement('button');b.id='sndbtn';b.textContent=AUD.on?'♪':'×';b.title='音のオン・オフ';
+  b.style.cssText='position:fixed;right:8px;bottom:8px;z-index:95;width:40px;height:40px;border-radius:50%;font-size:18px;padding:0;opacity:.85';
+  b.addEventListener('click',e=>{e.stopPropagation();audResume();audSetOn(!AUD.on);});document.body.appendChild(b);};
+ if(document.body)mk();else document.addEventListener('DOMContentLoaded',mk);
+ const first=()=>{audResume();};
+ document.addEventListener('pointerdown',first,true);document.addEventListener('keydown',first,true);
+ document.addEventListener('visibilitychange',()=>{if(!AUD.ctx)return;if(document.hidden)AUD.ctx.suspend();else if(AUD.on)AUD.ctx.resume();});
+}
+
 function render(){
  if(typeof document==='undefined')return;
+ audScene(screen==='game'?'battle':'menu');
  const app=document.getElementById('app');if(!app)return;
  let h=screen==='title'?titleHTML():screen==='edit'?editHTML():screen==='list'?listHTML():screen==='shop'?shopHTML():gameHTML();
  if(ui.rules)h+=rulesHTML();
@@ -803,6 +919,7 @@ function setTear(p,anim){const f=document.getElementById('tearfill');if(f){f.sty
 function tearDone(){
  if(!pk||pk.stage!=='tear'||pk.opening)return;pk.opening=true;
  const el=document.getElementById('pack');if(el)el.classList.add('torn');
+ sfxTear();
  try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}
  setTimeout(()=>{if(!pk)return;pk.stage='reveal';pk.idx=0;pk.flipped=false;render();setTimeout(arriveFx,60);},900);
 }
@@ -819,13 +936,14 @@ function settleStack(fling){
   else el.style.transform=stkT(fling?j-1:j);});
 }
 function flingTop(){
- if(!pk||pk.stage!=='reveal'||pk.anim)return;pk.anim=true;settleStack(true);
+ if(!pk||pk.stage!=='reveal'||pk.anim)return;pk.anim=true;settleStack(true);sfxFlip();
  setTimeout(()=>{if(!pk)return;pk.idx++;pk.anim=false;if(pk.idx>=pk.cards.length)pk.stage='summary';render();setTimeout(arriveFx,60);},300);
 }
 // カードが一番上に来た時の演出(SR/SSR)
 function arriveFx(){
  if(!pk||pk.stage!=='reveal')return;const x=pk.cards[pk.idx];if(!x||pk.fxFor===pk.idx)return;pk.fxFor=pk.idx;
  const st=document.getElementById('stage');if(!st)return;
+ sfxRare(x.r);
  if(x.r==='SR'||x.r==='SSR'){
   st.insertAdjacentHTML('beforeend',`<div class="fx fx-${x.r}">${sparks(x.r==='SSR'?28:14,x.r==='SSR'?'#fff':'#ffe27a')}<div class="rtext">${x.r}!</div></div>`);
   if(x.r==='SSR'){st.insertAdjacentHTML('beforeend','<div class="flash"></div>');try{navigator.vibrate&&navigator.vibrate([60,40,120]);}catch(e){}}
